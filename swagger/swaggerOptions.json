@@ -1,0 +1,26 @@
+{
+  "swaggerDefinition": {
+    "openapi": "3.0.1",
+    "info": {
+      "title": "Astrotalk API",
+      "version": "1.0.0"
+    },
+    "components": {
+      "securitySchemes": {
+        "basicAuth": {
+          "type": "http",
+          "scheme": "basic"
+        }
+      }
+    },
+    "security": [
+      {
+        "basicAuth": []
+      }
+    ]
+  },
+  "apis": [
+    "./app/controllers/user.controller.js",
+    "./app/controllers/auth.controller.js"
+  ]
+}
