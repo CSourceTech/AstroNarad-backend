@@ -8,10 +8,14 @@ module.exports = (app) => {
   // controller initialization
   const user = require("../controllers/user.controller");
   const auth = require("../controllers/auth.controller");
+  const astrologer = require("../controllers/astrologer.controller");
 
   // router initialization 
   var auth_route = require("express").Router();
   var profile_route = require("express").Router();
+  var astrologer_route = require("express").Router();
+  var review_route = require("express").Router();
+  var rating_router = require("express").Router();
 
   // auth routes 
   auth_route.post("/signin", [validation.UserLoginValidation], auth.sign_in);
@@ -20,6 +24,20 @@ module.exports = (app) => {
   // profile routes
   profile_route.post("/profile", [authJwt.verifyToken], user.create_or_update_profile);
   profile_route.get("/profile", [authJwt.verifyToken], user.get_profile);
+
+
+  // Astrologer routes
+  astrologer_route.post("/astrologer", astrologer.create_or_update_astrologer);
+  astrologer_route.get("/astrologers", astrologer.get_all_astrologers);
+  astrologer_route.get("/astrologer/:id", astrologer.get_astrologer_by_id);
+
+  // Review routes
+  review_route.post("/review", [authJwt.verifyToken], user.create_review);
+  review_route.get("/review/:astro_id", [authJwt.verifyToken], user.get_reviews_for_astrologer);
+
+  // Rating Routes
+  rating_router.post("/rating", [authJwt.verifyToken], user.createRating);
+  rating_router.get("/rating/:astro_id", [authJwt.verifyToken], user.getRatingsByAstrologer);
 
 
   var checkAPI = async function (req, res, next) {
@@ -55,4 +73,7 @@ module.exports = (app) => {
 
   app.use("/auth/", auth_route);
   app.use("/api/", profile_route);
+  app.use("/api/", review_route);
+  app.use("/api/", rating_router);
+  app.use("/admin/", astrologer_route);
 };
