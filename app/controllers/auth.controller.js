@@ -1,11 +1,8 @@
 const db = require("../models");
-var jwt = require("jsonwebtoken");
-var bcrypt = require("bcryptjs");
-const config = require("../config/auth.config");
 const commonUtil = require("../util/common");
 const User = db.user;
-const User_Token = db.user_login_token;
 const UserOtp = db.user_otps;
+const { Op } = require("sequelize");
 
 /**
  * @swagger
@@ -116,10 +113,10 @@ exports.sign_in = async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               user_id:
- *                 type: integer
+ *               username:
+ *                 type: string
  *                 required: true
- *                 example: 1
+ *                 example: "admin@gmail.com"
  *               otp:
  *                 type: string
  *                 required: true
@@ -143,7 +140,23 @@ exports.sign_in = async (req, res) => {
 // Controller to handle OTP verification
 exports.submit_otp = async (req, res) => {
   try {
-    const { user_id, otp } = req.body;
+    const { username, otp } = req.body;
+
+    let user = await User.findOne({
+      where: {
+        [Op.or]: [{ email: username }, { phone: username }]
+      }
+    });
+
+    if (!user) {
+      return res.status(404).send({ message: "User not found." });
+    }
+
+    if (user.is_blocked) {
+      return res.status(403).send({ message: "User is blocked due to too many failed attempts." });
+    }
+
+    const user_id = user.id;
 
     // Find OTP record for the user
     const otpRecord = await UserOtp.findOne({
@@ -155,15 +168,6 @@ exports.submit_otp = async (req, res) => {
         },
       },
     });
-
-    const user = await User.findByPk(user_id);
-    if (!user) {
-      return res.status(404).send({ message: "User not found." });
-    }
-
-    if (user.is_blocked) {
-      return res.status(403).send({ message: "User is blocked due to too many failed attempts." });
-    }
 
     if (!otpRecord) {
       user.failed_login_attempts += 1;
@@ -183,7 +187,6 @@ exports.submit_otp = async (req, res) => {
     user.failed_login_attempts = 0;
     user.otp_attempts = 0;
     await user.save();
-
     // Save token to the database
     await commonUtil.saveTokenToDB(user_id, token);
 

@@ -1,7 +1,9 @@
 module.exports = (app) => {
   const db = require("../models")
   const { authJwt, validation } = require("../middleware");
-  const User = db.user;
+  const { Op } = require("sequelize");
+  const UserLoginToken = db.user_login_token;
+
 
   // controller initialization
   const user = require("../controllers/user.controller");
@@ -34,9 +36,9 @@ module.exports = (app) => {
         },
       };
 
-      User_Token.findAll({ where: user_token_body }).then(
+      UserLoginToken.findAll({ where: user_token_body }).then(
         (tokens) => {
-          if (data[0]) {
+          if (tokens[0]) {
             req.user_id = tokens[0]?.user_id;
             next();
           } else {

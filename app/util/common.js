@@ -1,6 +1,9 @@
 const nodemailer = require("nodemailer");
 const dotenv = require('dotenv');
 dotenv.config();
+const db = require("../models");
+const UserLoginToken = db.user_login_token;
+const jwt = require("jsonwebtoken");
 
 
 async function send_email(email_data) {

@@ -6,12 +6,19 @@ const UserProfile = db.user_profile;
 const User = db.user;
 
 
+
 /**
  * @swagger
  * /api/profile:
  *   post:
  *     description: Create or Update User Profile
  *     summary: Create or Update User Profile
+ *     parameters:
+ *       - in: header
+ *         name: accesstoken
+ *         schema:
+ *           type: string
+ *           required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -19,10 +26,6 @@ const User = db.user;
  *           schema:
  *             type: object
  *             properties:
- *               user_id:
- *                 type: integer
- *                 required: true
- *                 example: 1
  *               name:
  *                 type: string
  *                 example: "John Doe"
@@ -59,7 +62,8 @@ const User = db.user;
 // Controller to create or update user profile
 exports.create_or_update_profile = async (req, res) => {
   try {
-    const { user_id, name, date_of_birth, profile_image, gender, place_of_birth, time_of_birth } = req.body;
+    const user_id = req.user_id;
+    const { name, date_of_birth, profile_image, gender, place_of_birth, time_of_birth } = req.body;
 
     // Find or create user profile
     let userProfile = await UserProfile.findOne({ where: { user_id: user_id } });
@@ -102,6 +106,12 @@ exports.create_or_update_profile = async (req, res) => {
  *     summary: Get User Profile
  *     tags:
  *       - User Profile
+ *     parameters:
+ *       - in: header
+ *         name: accesstoken
+ *         schema:
+ *           type: string
+ *           required: true
  *     responses:
  *       200:
  *         description: Profile retrieved successfully.
@@ -168,8 +178,10 @@ exports.get_profile = async (req, res) => {
       return res.status(404).send({ message: "User not found." });
     }
 
+    const { user_id, ...userData } = userProfile.dataValues;
+
     res.status(200).send({
-      ...userProfile,
+      ...userData,
       email: user.email,
       phone: user.phone,
 
