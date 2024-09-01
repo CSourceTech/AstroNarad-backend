@@ -1,7 +1,7 @@
-// app/models/user_login_token.model.js
+// app/models/user_otps.model.js
 
 module.exports = (sequelize, Sequelize) => {
-  const UserLoginToken = sequelize.define("user_login_token", {
+  const UserOtp = sequelize.define("user_otps", {
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
@@ -11,7 +11,7 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: false,
     },
-    token: {
+    otp: {
       type: Sequelize.STRING,
       allowNull: false,
     },
@@ -19,11 +19,7 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.DATE,
       allowNull: false,
     },
-    is_revoked: {
-      type: Sequelize.BOOLEAN,
-      defaultValue: false,
-    },
   });
 
-  return UserLoginToken;
+  return UserOtp;
 };

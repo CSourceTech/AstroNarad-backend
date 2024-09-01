@@ -8,26 +8,41 @@ module.exports = (app) => {
   const auth = require("../controllers/auth.controller");
 
   // router initialization 
-  var user_route = require("express").Router();
   var auth_route = require("express").Router();
-
-  // user routes 
-  user_route.post("/user", [validation.UserCreateValidation], user.create_user);
+  var profile_route = require("express").Router();
 
   // auth routes 
   auth_route.post("/signin", [validation.UserLoginValidation], auth.sign_in);
+  auth_route.post("/submit-otp", auth.submit_otp);
 
-  // user_task_details_api_router.get(
-  //   "/user/task/task-detail/:taskId",
-  //   [authJwt.verifyToken],
-  //   user.getTaskDetails
-  // );
+  // profile routes
+  profile_route.post("/profile", [authJwt.verifyToken], user.create_or_update_profile);
+  profile_route.get("/profile", [authJwt.verifyToken], user.get_profile);
 
 
   var checkAPI = async function (req, res, next) {
-    if (req.token) {
-      var basic_token = req.token;
+    const access_token = req?.headers?.accesstoken;
+    if (access_token) {
+      var currentDate = new Date();
+      var user_token_body = {
+        token: access_token,
+        expiry_date: {
+          [Op.gt]: currentDate
+            .toISOString()
+            .replace(/T/, " ")
+            .replace(/\..+/, ""),
+        },
+      };
 
+      User_Token.findAll({ where: user_token_body }).then(
+        (tokens) => {
+          if (data[0]) {
+            req.user_id = tokens[0]?.user_id;
+            next();
+          } else {
+            res.status(401).send("Authorize Parameter Invalid");
+          }
+        })
     } else {
       res.status(401).send("Authorize Parameter not Provided");
     }
@@ -35,6 +50,7 @@ module.exports = (app) => {
 
   // return api data 
   app.use("/api/*", checkAPI);
-  app.use("/", user_route);
+
   app.use("/auth/", auth_route);
+  app.use("/api/", profile_route);
 };

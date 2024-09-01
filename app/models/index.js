@@ -21,6 +21,13 @@ db.sequelize = sequelize;
 // models initialization
 db.user = require("./user.model.js")(sequelize, Sequelize);
 db.user_login_token = require("./user_login_token.model.js")(sequelize, Sequelize);
+db.user_otps = require("./user_otps.model.js")(sequelize, Sequelize);
+db.user_profile = require("./user_profile.model.js")(sequelize, Sequelize);
+
+
+// Defining relationships
+db.user.hasOne(db.user_profile, { foreignKey: 'user_id' });
+db.user_profile.belongsTo(db.user, { foreignKey: 'user_id' });
 
 // models export
 module.exports = db;
