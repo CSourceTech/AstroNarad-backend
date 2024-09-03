@@ -16,6 +16,7 @@ module.exports = (app) => {
   var astrologer_route = require("express").Router();
   var review_route = require("express").Router();
   var rating_router = require("express").Router();
+  var horoscopeRouter = require("express").Router();
 
   // auth routes 
   auth_route.post("/signin", [validation.UserLoginValidation], auth.sign_in);
@@ -38,6 +39,14 @@ module.exports = (app) => {
   // Rating Routes
   rating_router.post("/rating", [authJwt.verifyToken], user.createRating);
   rating_router.get("/rating/:astro_id", [authJwt.verifyToken], user.getRatingsByAstrologer);
+
+  // User Horoscope Routes
+  horoscopeRouter.post("/horoscope", [authJwt.verifyToken], user.createHoroscope);
+  horoscopeRouter.get("/horoscope", [authJwt.verifyToken], user.getHoroscopeByUserId);
+  horoscopeRouter.post("/horoscope-list", [authJwt.verifyToken], user.createUserRelationHoroscope);
+  horoscopeRouter.get("/horoscope-list", [authJwt.verifyToken], user.getUserRelationHoroscope);
+  horoscopeRouter.post("/daily-horoscope", [authJwt.verifyToken], user.createOrUpdateDailyHoroscope);
+  horoscopeRouter.get("/daily-horoscope", [authJwt.verifyToken], user.getDailyHoroscope);
 
 
   var checkAPI = async function (req, res, next) {
@@ -75,5 +84,6 @@ module.exports = (app) => {
   app.use("/api/", profile_route);
   app.use("/api/", review_route);
   app.use("/api/", rating_router);
+  app.use("/api/", horoscopeRouter);
   app.use("/admin/", astrologer_route);
 };
