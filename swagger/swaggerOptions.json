@@ -22,6 +22,7 @@
   "apis": [
     "./app/controllers/user.controller.js",
     "./app/controllers/auth.controller.js",
-    "./app/controllers/astrologer.controller.js"
+    "./app/controllers/astrologer.controller.js",
+    "./app/controllers/shopping.controller.js"
   ]
 }

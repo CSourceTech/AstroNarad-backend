@@ -116,14 +116,19 @@ exports.create_or_update_astrologer = async (req, res) => {
 
 /**
  * @swagger
- * /admin/astrologers:
+ * /api/astrologers:
  *   get:
  *     description: Retrieve all astrologer details
  *     summary: Retrieve all astrologer details
  *     tags:
  *       - Astrologer
- *     security:
- *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: accesstoken
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Access token for user authentication
  *     responses:
  *       200:
  *         description: Successfully retrieved all astrologer details.
@@ -189,15 +194,19 @@ exports.get_all_astrologers = async (req, res) => {
 
 /**
  * @swagger
- * /admin/astrologer/{id}:
+ * /api/astrologer/{id}:
  *   get:
  *     description: Retrieve astrologer details by ID
  *     summary: Retrieve astrologer details by ID
  *     tags:
  *       - Astrologer
- *     security:
- *       - bearerAuth: []
  *     parameters:
+ *       - in: header
+ *         name: accesstoken
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Access token for user authentication
  *       - name: id
  *         in: path
  *         required: true

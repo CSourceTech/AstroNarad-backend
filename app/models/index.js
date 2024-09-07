@@ -31,6 +31,17 @@ db.user_horoscope_relation = require("./user_horoscope_relation.model.js")(seque
 db.daily_horoscope = require("./daily_horoscope.model.js")(sequelize, Sequelize);
 
 
+// shopping models initialization 
+db.product_category = require("./shopping/product_category.model.js")(sequelize, Sequelize);
+db.product = require("./shopping/product.model.js")(sequelize, Sequelize);
+db.cart = require("./shopping/cart.model.js")(sequelize, Sequelize);
+db.cart_data = require("./shopping/cart_data.model.js")(sequelize, Sequelize);
+db.address = require("./shopping/address.model.js")(sequelize, Sequelize);
+
+db.order = require("./shopping/order.model.js")(sequelize, Sequelize);
+db.transaction = require("./shopping/transaction.model.js")(sequelize, Sequelize);
+
+
 // Defining relationships
 db.user.hasOne(db.user_profile, { foreignKey: 'user_id' });
 db.user_profile.belongsTo(db.user, { foreignKey: 'user_id' });
