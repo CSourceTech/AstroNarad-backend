@@ -7,7 +7,7 @@ const Product = db.product;
 const UserLoginToken = db.user_login_token;
 const jwt = require("jsonwebtoken");
 const { sequelize } = require("../models");
-
+const crypto = require('crypto');
 
 
 async function send_email(email_data) {
@@ -105,11 +105,19 @@ async function getTotalCartPrice(cartId) {
     return results[0];
 }
 
+// Function to generate HMAC SHA256 signature
+const generateSignature = (data, secretKey) => {
+    const hmac = crypto.createHmac('sha256', secretKey);
+    hmac.update(data);
+    return hmac.digest('hex');
+};
+
 module.exports = {
     send_email,
     send_otp,
     generate_otp,
     saveTokenToDB,
     generateJwtToken,
-    getTotalCartPrice
+    getTotalCartPrice,
+    generateSignature
 };
