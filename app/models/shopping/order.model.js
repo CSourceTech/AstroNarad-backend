@@ -13,11 +13,6 @@ module.exports = (sequelize, Sequelize) => {
         },
         transaction_id: {
             type: Sequelize.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'transactions',
-                key: 'transaction_id',
-            },
         },
         cart_id: {
             type: Sequelize.INTEGER,

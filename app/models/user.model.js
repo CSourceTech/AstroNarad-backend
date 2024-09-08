@@ -7,11 +7,11 @@ module.exports = (sequelize, Sequelize) => {
     },
     email: {
       type: Sequelize.STRING,
-      unique: true,
+      unique: 'email',
     },
     phone: {
       type: Sequelize.STRING,
-      unique: true,
+      unique: 'phone',
     },
     failed_login_attempts: {
       type: Sequelize.INTEGER,

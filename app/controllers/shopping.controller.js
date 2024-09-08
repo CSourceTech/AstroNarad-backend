@@ -1,4 +1,5 @@
 const db = require("../models");
+const commonUtil = require("../util/common");
 const ProductCategory = db.product_category;
 const Product = db.product;
 const Cart = db.cart;
@@ -13,13 +14,6 @@ const Address = db.address;
  *     summary: Create Product Category
  *     tags:
  *       - Shopping
- *     parameters:
- *       - in: header
- *         name: accesstoken
- *         schema:
- *           type: string
- *         required: true
- *         description: Access token for user authentication
  *     requestBody:
  *       required: true
  *       content:
@@ -98,13 +92,6 @@ exports.getAllProductCategories = async (req, res) => {
  *     summary: Create Product
  *     tags:
  *       - Shopping
- *     parameters:
- *       - in: header
- *         name: accesstoken
- *         schema:
- *           type: string
- *         required: true
- *         description: Access token for admin authentication
  *     requestBody:
  *       required: true
  *       content:
@@ -202,7 +189,7 @@ exports.createProduct = async (req, res) => {
 
 /**
  * @swagger
- * /api/product:
+ * /api/product/{category_id}:
  *   get:
  *     description: Fetch all products by category ID
  *     summary: Get Products By Category
@@ -235,14 +222,19 @@ exports.getProductsByCategory = async (req, res) => {
     try {
         const { category_id } = req.params;
 
-        if (!category_id) {
+        if (isNaN(category_id)) {
             const products = await Product.findAll();
             res.status(200).send(products);
         } else {
             const products = await Product.findAll({
                 where: { category_id },
             });
-            res.status(200).send(products);
+
+            if (products.length) {
+                res.status(200).send(products);
+            } else {
+                res.status(200).send({ message: "No product found in this category." });
+            }
         }
 
 
@@ -303,7 +295,7 @@ exports.addToCart = async (req, res) => {
             return res.status(400).send({ message: "Product ID, category ID, and quantity are required." });
         }
 
-        var cartInfo = Cart.findOne({
+        var cartInfo = await Cart.findOne({
             where: { user_id: user_id },
             order: [['cart_id', 'DESC']]
         });
@@ -312,14 +304,14 @@ exports.addToCart = async (req, res) => {
             cartInfo = await Cart.create({ user_id });
         }
 
-        const cartDataInfo = CartData.findOne({ where: { cart_id: cartInfo.cart_id, category_id: category_id, product_id: product_id } });
+        const cartDataInfo = await CartData.findOne({ where: { cart_id: cartInfo.cart_id, category_id: category_id, product_id: product_id } });
 
         if (cartDataInfo) {
-            cartDataInfo.quality = quantity;
-            cartDataInfo.save();
+            cartDataInfo.quantity = quantity;
+            await cartDataInfo.save();
             res.status(200).send({ message: "Cart item updated successfully." });
         } else {
-            await CartData.create({ user_id, product_id, category_id, quantity });
+            await CartData.create({ cart_id: cartInfo.cart_id, user_id, product_id, category_id, quantity });
             res.status(201).send({ message: "Cart item created successfully." });
         }
 
@@ -359,7 +351,7 @@ exports.getCartItems = async (req, res) => {
     try {
         const user_id = req.user_id;
 
-        var cartInfo = Cart.findOne({
+        var cartInfo = await Cart.findOne({
             where: { user_id: user_id },
             order: [['cart_id', 'DESC']]
         });
@@ -384,8 +376,11 @@ exports.getCartItems = async (req, res) => {
                 };
             })
         );
+        const result = { data: detailedCartItems, total_amount: 0 };
+        const amountRes = await commonUtil.getTotalCartPrice(cartInfo.cart_id);
+        result.total_amount = amountRes.total_price;
 
-        res.status(200).send(detailedCartItems);
+        res.status(200).send(result);
     } catch (error) {
         res.status(500).send({ message: error.message || "An error occurred while retrieving cart items." });
     }
@@ -395,7 +390,7 @@ exports.getCartItems = async (req, res) => {
 
 /**
  * @swagger
- * /admin/address:
+ * /api/address:
  *   post:
  *     description: Add a new address for a user
  *     summary: Add Address
@@ -490,7 +485,12 @@ exports.getUserAddresses = async (req, res) => {
         const user_id = req.user_id;
 
         const addresses = await Address.findAll({ where: { user_id } });
-        res.status(200).send(addresses);
+
+        if (addresses.length) {
+            res.status(200).send(addresses);
+        } else {
+            res.status(200).send({ message: "No address found." });
+        }
     } catch (error) {
         res.status(500).send({ message: error.message || "An error occurred while retrieving addresses." });
     }
@@ -500,7 +500,7 @@ exports.getUserAddresses = async (req, res) => {
 
 /**
  * @swagger
- * /api/select-address:
+ * /api/select-address/{address_id}:
  *   post:
  *     description: Select default address for a user
  *     summary: Select user default address
@@ -531,27 +531,31 @@ exports.getUserAddresses = async (req, res) => {
 // Select address for a user
 exports.selectUserAddress = async (req, res) => {
     try {
-        const { address_id } = req.params;
         const user_id = req.user_id;
-
-        const addresses = await Address.findAll({ where: { user_id: user_id, is_selected: true } });
-
-        if (addresses.length == 0) {
-            res.status(200).send({ message: "Address list is Empty." });
-        }
-
-        // Fetch and update address details for each addresses
-        await addresses.map(async (item) => {
-            const address = await Address.findByPk(item.address_id);
-            address.is_selected = false;
-            await address.save();
-        })
+        const { address_id } = req.params;
 
         const address = await Address.findOne({ where: { address_id } });
-        address.is_selected = true;
-        await address.save();
 
-        res.status(200).send({ message: "Default address is now changed." });
+        if (!address) {
+            res.status(404).send({ message: "Invalid address id." });
+        } else {
+            const addresses = await Address.findAll({ where: { user_id: user_id, is_selected: true } });
+
+            if (addresses.length) {
+                // Fetch and update address details for each addresses
+                await addresses.map(async (item) => {
+                    const address = await Address.findByPk(item.address_id);
+                    address.is_selected = false;
+                    await address.save();
+                })
+            }
+
+            address.is_selected = true;
+            await address.save();
+
+            res.status(200).send({ message: "Default address is now changed." });
+        }
+
     } catch (error) {
         res.status(500).send({ message: error.message || "An error occurred while retrieving addresses." });
     }

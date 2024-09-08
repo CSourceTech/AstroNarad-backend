@@ -4,9 +4,12 @@ const db = require("../models");
 const Order = db.order;
 const Transaction = db.transaction;
 const Cart = db.cart;
+const CartData = db.cart_data;
+const Product = db.product;
 const axios = require('axios'); // For Razorpay API calls
 const razorpay = require('razorpay');
-
+const { Op, Sequelize } = require("sequelize");
+const commonUtil = require("../util/common");
 
 
 /**
@@ -24,22 +27,9 @@ const razorpay = require('razorpay');
  *           type: string
  *         required: true
  *         description: Access token for user authentication
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               amount:
- *                 type: number
- *                 format: float
- *                 example: 500.00
  *     responses:
  *       201:
  *         description: Order created successfully.
- *       400:
- *         description: Amount is required.
  *       404:
  *         description: No cart found.
  *       500:
@@ -50,14 +40,8 @@ const razorpay = require('razorpay');
 exports.createOrder = async (req, res) => {
     try {
         const user_id = req.user_id;
-        const { amount } = req.body;
 
-        if (!amount) {
-            return res.status(400).send({ message: "Amount is required." });
-
-        }
-
-        const cartInfo = Cart.findOne({
+        const cartInfo = await Cart.findOne({
             where: { user_id: user_id },
             order: [['cart_id', 'DESC']]
         });
@@ -65,6 +49,10 @@ exports.createOrder = async (req, res) => {
         if (!cartInfo) {
             return res.status(404).send({ message: "No cart found." });
         }
+
+        const result = await commonUtil.getTotalCartPrice(cartInfo.cart_id);
+
+        const amount = result.total_price;
 
         // Create a new order
         const newOrder = await Order.create({ user_id, transaction_id: null, cart_id: cartInfo.cart_id, amount });
@@ -137,43 +125,45 @@ exports.processPayment = async (req, res) => {
             return res.status(404).send({ message: "Order not found." });
         }
 
-        const transaction = Transaction.findOne({ where: { order_id: order.order_id } });
+        const transaction = await Transaction.findOne({ where: { order_id: order.order_id } });
 
         if (!transaction) {
             return res.status(400).send({ message: "Wrong order id." });
+        } else {
+
+            transaction.payment_method = payment_method;
+            await transaction.save();
+
+            // Initialize Razorpay instance
+            const instance = new razorpay({
+                key_id: process.env.RAZORPAY_KEY_ID,
+                key_secret: process.env.RAZORPAY_KEY_SECRET
+            });
+
+            // Create payment order
+            const razorpayOrder = await instance.orders.create({
+                amount: order.amount * 100, // amount in paise
+                currency: "INR",
+                receipt: `order_${order_id}`,
+            });
+
+            if (!razorpayOrder) {
+                return res.status(400).send({ message: "Something went wrong while making order with payment gateway." });
+            }
+
+            // Update order with transaction_id
+            await Order.update({ transaction_id: razorpayOrder.id }, { where: { order_id } });
+
+            // Return payment details
+            res.status(200).send({
+                gateway_order_id: razorpayOrder.id,
+                currency: razorpayOrder.currency,
+                amount: razorpayOrder.amount,
+                gateway_key_id: process.env.RAZORPAY_KEY_ID,
+                order
+            });
         }
 
-        transaction.payment_method = payment_method;
-        transaction.save();
-
-        // Initialize Razorpay instance
-        const instance = new razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET
-        });
-
-        // Create payment order
-        const razorpayOrder = await instance.orders.create({
-            amount: order.amount * 100, // amount in paise
-            currency: "INR",
-            receipt: `order_${order_id}`,
-        });
-
-        if (!razorpayOrder) {
-            return res.status(400).send({ message: "Something went wrong while making order with payment gateway." });
-        }
-
-        // Update order with transaction_id
-        await Order.update({ transaction_id: razorpayOrder.id }, { where: { order_id } });
-
-        // Return payment details
-        res.status(200).send({
-            gateway_order_id: razorpayOrder.id,
-            currency: razorpayOrder.currency,
-            amount: razorpayOrder.amount,
-            gateway_key_id: process.env.RAZORPAY_KEY_ID,
-            order
-        });
     } catch (error) {
         res.status(500).send({ message: error.message || "An error occurred while processing the payment." });
     }

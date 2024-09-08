@@ -5,7 +5,7 @@ module.exports = (sequelize, Sequelize) => {
         zodiac_sign: {
             type: Sequelize.STRING,
             allowNull: false,
-            unique: true,
+            unique: 'zodiac_sign',
         },
         date: {
             type: Sequelize.DATEONLY,

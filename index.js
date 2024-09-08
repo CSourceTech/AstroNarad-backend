@@ -14,7 +14,7 @@ const PORT = process.env.PORT;
 const bearerToken = require("express-bearer-token");
 app.use(cookieParser());
 
-db.sequelize.sync({ force: false }).then(() => {
+db.sequelize.sync({ force: false, alter: true }).then(() => {
     console.log("re-sync db.");
 });
 
