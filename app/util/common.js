@@ -52,7 +52,7 @@ const generate_otp = () => {
 // Save token to the database
 const saveTokenToDB = async (user_id, token) => {
     const expiryDate = new Date();
-    expiryDate.setSeconds(expiryDate.getSeconds() + 86400); // 24 hours expiration
+    expiryDate.setSeconds(expiryDate.getSeconds() + 86400); // 24 hours - 86400 expiration
 
     await UserLoginToken.create({
         user_id: user_id,

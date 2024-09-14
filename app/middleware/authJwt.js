@@ -10,7 +10,7 @@ verifyToken = (req, res, next) => {
     });
   }
   var currentDate = new Date();
-  var condition_unauthorised_token = { token: token, createdAt: { [Op.gt]: currentDate.toISOString().replace(/T/, ' ').replace(/\..+/, '') } };
+  var condition_unauthorised_token = { token: token, expiry_date: { [Op.gt]: currentDate.toISOString().replace(/T/, ' ').replace(/\..+/, '') } };
   User_Token.findAll({ where: condition_unauthorised_token })
     .then(data => {
       if (data[0]?.id != "") {
