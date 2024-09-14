@@ -59,6 +59,10 @@ app.use(
 
 require("./app/routes/api.routes")(app);
 
+app.get('/', function (req, res) {
+    res.send('App Working Fine');
+})
+
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 app.listen(PORT, () => {
