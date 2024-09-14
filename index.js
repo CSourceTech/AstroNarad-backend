@@ -27,7 +27,14 @@ const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUI = require("swagger-ui-express");
 const swaggerOptions = require("./swagger/swaggerOptions.json");
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
+
+// CDN CSS
+const CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.6.2/swagger-ui.min.css";
+
 const swaggerUiOptions = {
+    customCss:
+        '.swagger-ui .opblock .opblock-summary-path-description-wrapper { align-items: center; display: flex; flex-wrap: wrap; gap: 0 10px; padding: 0 10px; width: 100%; }',
+    customCssUrl: CSS_URL,
     swaggerOptions: {
         basicAuth: {
             name: "Authorization",
@@ -39,6 +46,7 @@ const swaggerUiOptions = {
         },
     },
 };
+
 app.use(
     "/api-docs",
     swaggerUI.serve,
@@ -48,8 +56,7 @@ app.use(
 // parse requests of content-type - application/json
 app.use(express.json());
 
-app.use("/", express.static(path.join(__dirname, "public")));
-app.use(express.static(__dirname));
+app.use(express.static("public"));
 
 app.use(
     bearerToken({

@@ -20,7 +20,7 @@ verifyToken = (req, res, next) => {
     })
     .catch(err => {
       User_Token.destroy({
-        where: { login_token: token }
+        where: { token: token }
       }).then(num => {
         if (num == 1) {
           res.status(401).send({
