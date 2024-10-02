@@ -85,9 +85,17 @@ exports.sign_in = async (req, res) => {
 
     // Here, send the OTP to the user's email or phone number using an external service (like Twilio or SendGrid)
     var messageData = {
-      email: 'kprince1408@gmail.com',
-      subject: 'otp',
-      message: `${otp}`,
+      email: user.email,
+      subject: 'Login OTP',
+      message: `<div style="padding: 20px; background-color: rgb(255, 255, 255);">
+                    <div style="color: rgb(0, 0, 0); text-align: left;">
+                      <h1 style="margin: 1rem 0">Verification code</h1>
+                      <p style="padding-bottom: 16px">Please use the verification code below to sign in.</p>
+                      <p style="padding-bottom: 16px"><strong style="font-size: 130%">${otp}</strong></p>
+                      <p style="padding-bottom: 16px">If you didn't request this, you can ignore this email.</p>
+                      <p style="padding-bottom: 16px">Thanks,<br>The Mailmeteor team</p>
+                    </div>
+                  </div>`,
     };
     await commonUtil.send_email(messageData);
     console.log(`OTP for user ${user.email || user.phone}: ${otp}`); // For testing purposes
