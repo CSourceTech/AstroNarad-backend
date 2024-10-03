@@ -93,7 +93,7 @@ exports.sign_in = async (req, res) => {
                       <p style="padding-bottom: 16px">Please use the verification code below to sign in.</p>
                       <p style="padding-bottom: 16px"><strong style="font-size: 130%">${otp}</strong></p>
                       <p style="padding-bottom: 16px">If you didn't request this, you can ignore this email.</p>
-                      <p style="padding-bottom: 16px">Thanks,<br>The Mailmeteor team</p>
+                      <p style="padding-bottom: 16px">Thanks,<br>The Astro team</p>
                     </div>
                   </div>`,
     };
