@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
         }
     }, {
         indexes: [
-            { fields: ['user_id', 'astro_id'] },  // Optimizes searches for a specific user-astro chat thread
+            { fields: ['sender_id', 'reciever_id'] },  // Optimizes searches for a specific user-astro chat thread
             { fields: ['createdAt'] }            // Helps with pagination based on message timestamps
         ],
         timestamps: false
