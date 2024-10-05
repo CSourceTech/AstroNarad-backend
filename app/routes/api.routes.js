@@ -12,6 +12,7 @@ module.exports = (app) => {
 
   const shopping = require("../controllers/shopping.controller");
   const payment = require("../controllers/payment.controller");
+  const chat = require("../controllers/chat.controller");
 
 
   // router initialization 
@@ -25,7 +26,7 @@ module.exports = (app) => {
   var shoppingRouter = require("express").Router();
   var paymentRouter = require("express").Router();
 
-
+  var chattingRouter = require("express").Router();
 
 
   // auth routes 
@@ -71,10 +72,14 @@ module.exports = (app) => {
   shoppingRouter.post("/select-address/:address_id", [authJwt.verifyToken], shopping.selectUserAddress);
 
 
-  // Payment Routes
+  // Payment and Shopping Routes
   shoppingRouter.post("/order", [authJwt.verifyToken], payment.createOrder);
   paymentRouter.post("/payment/process", [authJwt.verifyToken], payment.processPayment);
   paymentRouter.post("/payment/confirm", [authJwt.verifyToken], payment.confirmPayment);
+
+  // Chatting Routes
+  chattingRouter.post('/chat/send', [authJwt.verifyToken], chat.sendMessage);
+  chattingRouter.get('/chat/thread/:reciever_id', [authJwt.verifyToken], chat.getMessageThread);
 
 
   var checkAPI = async function (req, res, next) {
@@ -119,4 +124,5 @@ module.exports = (app) => {
 
   app.use("/api/", shoppingRouter);
   app.use("/admin/", shoppingRouter);
+  app.use("/api/", chattingRouter);
 };

@@ -43,6 +43,8 @@ db.address = require("./shopping/address.model.js")(sequelize, Sequelize);
 db.order = require("./shopping/order.model.js")(sequelize, Sequelize);
 db.transaction = require("./shopping/transaction.model.js")(sequelize, Sequelize);
 
+db.message = require("./message.model.js")(sequelize, Sequelize);
+
 
 // Defining relationships
 db.user.hasOne(db.user_profile, { foreignKey: 'user_id' });

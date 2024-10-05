@@ -52,7 +52,7 @@ const generate_otp = () => {
 // Save token to the database
 const saveTokenToDB = async (user_id, token) => {
     const expiryDate = new Date();
-    expiryDate.setSeconds(expiryDate.getSeconds() + 86400); // 24 hours - 86400 expiration
+    expiryDate.setSeconds(expiryDate.getSeconds() + 86400 * process.env.TOKEN_EXPIRY_AFTER); // 24 hours - 86400 expiration
 
     await UserLoginToken.create({
         user_id: user_id,
@@ -65,7 +65,7 @@ const saveTokenToDB = async (user_id, token) => {
 // Generate a JWT token
 const generateJwtToken = (user_id) => {
     return jwt.sign({ id: user_id }, process.env.JWT_SECRET, {
-        expiresIn: 86400, // 24 hours
+        expiresIn: 86400 * process.env.TOKEN_EXPIRY_AFTER, // 86400 = 24 hours
     });
 };
 
