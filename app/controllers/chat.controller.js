@@ -1,6 +1,6 @@
 const db = require("../models");
 const commonUtil = require("../util/common");
-const Message = db.Message;
+const Message = db.message;
 const { Op } = require("sequelize");
 
 
@@ -86,7 +86,7 @@ exports.sendMessage = async (req, res) => {
 
 /**
  * @swagger
- * /api/chat/thread//{reciever_id}:
+ * /api/chat/thread/{reciever_id}:
  *   get:
  *     summary: Get message thread
  *     description: Fetch message thread between a user and astrologer with pagination support
@@ -101,21 +101,15 @@ exports.sendMessage = async (req, res) => {
  *         name: reciever_id
  *         schema:
  *           type: integer
- *           required: true
- *           description: ID of the reciever
- *           example: 2
+ *         required: true
+ *         description: ID of the reciever
+ *         example: 2
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
- *           description: Page number for pagination (default is 1)
- *           example: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           description: Number of messages per page (default is 20)
- *           example: 20
+ *         description: Page number for pagination (default is 1)
+ *         example: 1
  *     tags:
  *       - Chat
  *     responses:
@@ -174,11 +168,12 @@ exports.getMessageThread = async (req, res) => {
         const { reciever_id } = req.params;
         const { page = 1 } = req.query; // Pagination variables (default to page 1, 20 messages per page)
 
-        const offset = (page - 1) * 20; // Messages limit is set to 20
+        const limit = 15;
+        const offset = (page - 1) * limit; // Messages limit is set to 20
 
         const messages = await Message.findAndCountAll({
             where: { sender_id, reciever_id },
-            order: [['created_at', 'DESC']],  // Get the latest messages first
+            order: [['createdAt', 'DESC']],  // Get the latest messages first
             limit: parseInt(limit),
             offset: parseInt(offset),
         });
