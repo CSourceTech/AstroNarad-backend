@@ -2,12 +2,11 @@ const nodemailer = require("nodemailer");
 const dotenv = require('dotenv');
 dotenv.config();
 const db = require("../models");
-const CartData = db.cart_data;
-const Product = db.product;
 const UserLoginToken = db.user_login_token;
 const jwt = require("jsonwebtoken");
 const { sequelize } = require("../models");
 const crypto = require('crypto');
+const { Op } = require("sequelize");
 
 
 async function send_email(email_data) {
@@ -112,6 +111,23 @@ const generateSignature = (data, secretKey) => {
     return hmac.digest('hex');
 };
 
+// Function to Get user id from login token
+const getUserIdFromLoginToken = async (access_token) => {
+    var currentDate = new Date();
+    var user_token_body = {
+        token: access_token,
+        expiry_date: {
+            [Op.gt]: currentDate
+                .toISOString()
+                .replace(/T/, " ")
+                .replace(/\..+/, ""),
+        },
+    };
+
+    const tokens = await UserLoginToken.findAll({ where: user_token_body });
+    return tokens;
+}
+
 module.exports = {
     send_email,
     send_otp,
@@ -119,5 +135,6 @@ module.exports = {
     saveTokenToDB,
     generateJwtToken,
     getTotalCartPrice,
-    generateSignature
+    generateSignature,
+    getUserIdFromLoginToken
 };

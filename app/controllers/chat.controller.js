@@ -3,7 +3,6 @@ const commonUtil = require("../util/common");
 const Message = db.message;
 const { Op } = require("sequelize");
 
-
 /**
  * @swagger
  * /api/chat/send:
@@ -29,6 +28,10 @@ const { Op } = require("sequelize");
  *                 description: Type of messsage
  *                 enum: [edit, new]
  *                 example: "new"
+ *               edit_message_id:
+ *                 type: integer
+ *                 description: Message ID to edit
+ *                 example: 2
  *               reciever_id:
  *                 type: integer
  *                 description: ID of the user receiving the message
@@ -57,9 +60,11 @@ exports.sendMessage = async (req, res) => {
         const user_id = req.user_id;
         const { message_type, reciever_id, message, from_user_type } = req.body;
 
+        const sender_id = user_id;
+
+        var messageData = {};
         if (message_type === "new") {
-            const sender_id = user_id;
-            await Message.create({
+            messageData = await Message.create({
                 sender_id,
                 reciever_id,
                 message,
@@ -69,14 +74,27 @@ exports.sendMessage = async (req, res) => {
                 is_edited: false
             });
         } else {
-            await Message.update({
-                message,
-                updated_at: new Date(),
-                is_edited: true
-            });
+            const { edit_message_id } = req.body;
+            messageData = await Message.findOne({ where: { message_id: edit_message_id } });
+
+            messageData.message = message;
+            messageData.is_edited = true;
+            messageData.updated_at = new Date();
+
+            messageData.save();
         }
 
-        res.status(201).send({ message: "Message sent successfully." });
+        // Define room ID based on the participants
+        const roomId = `chat_${sender_id}_${reciever_id}`;
+        // Emit the message only to the recipient’s room using Socket.IO
+        const socketData = {
+            message: message,
+            is_edited: message_type !== "new"
+        };
+
+        await global.io.to(roomId).emit('receiveMessage', socketData);
+
+        res.status(201).send({ message: "Message sent successfully.", data: messageData });
     } catch (error) {
         res.status(500).send({ message: error.message || "An error occurred while sending the message." });
     }

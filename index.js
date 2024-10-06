@@ -6,12 +6,15 @@ app.use(
     session({ resave: true, saveUninitialized: true, secret: "XCR3rsasa%RDHHH" })
 );
 const cors = require("cors");
-const path = require("path");
 const db = require("./app/models");
 const cookieParser = require("cookie-parser");
 require("dotenv").config("./.env");
 const PORT = process.env.PORT;
 const bearerToken = require("express-bearer-token");
+const http = require('http'); // Import http to create a server
+const { Server } = require("socket.io"); // Import socket.io
+const commonUtil = require("./app/util/common");
+
 app.use(cookieParser());
 
 db.sequelize.sync({ force: false, alter: true }).then(() => {
@@ -72,6 +75,44 @@ app.get('/', function (req, res) {
 
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
-app.listen(PORT, () => {
+
+
+// Serve the app and create an HTTP server
+const server = http.createServer(app);
+
+// Initialize socket.io with the server instance
+const io = new Server(server, {
+    cors: {
+        origin: "*",  // Configure CORS for Socket.IO
+        methods: ["GET", "POST"],
+    },
+});
+
+// Socket.IO connection event
+io.on('connection', (socket) => {
+    console.log('A user connected');
+    // Join the user to a specific room based on their user_id or astro_id
+    socket.on('joinRoom', async (reciever_id) => {
+        const accessToken = socket.handshake.query.token;
+        const tokens = await commonUtil.getUserIdFromLoginToken(accessToken);
+        const sender_id = tokens[0]?.user_id;
+
+        const finalRoomId = `chat_${sender_id}_${reciever_id}`;
+
+        socket.join(finalRoomId);  // Join the user to their specific room
+        console.log(`User joined room: ${finalRoomId}`);
+    });
+
+    // Disconnect event
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
+
+});
+
+global.io = io;
+
+// Start listening for HTTP and WebSocket connections
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 });
